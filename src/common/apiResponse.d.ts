@@ -8,5 +8,6 @@ export interface Success {
 export interface Failure {
   status: boolean,
   code: string,
-  error: string
+  error: string,
+  data?: object
 }

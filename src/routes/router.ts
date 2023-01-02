@@ -19,4 +19,6 @@ router.get('/', (req: Request, res: Response) => {
 
 router.get('/getUsers', user.allUsers);
 
+router.post('/register', user.createUser);
+
 export default router;
