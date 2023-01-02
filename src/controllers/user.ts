@@ -11,7 +11,7 @@ const user = {
    try {
     let result = await getAllUsers();
 
-    const responseJson: Success = {
+    const response: Success = {
       status: true,
       code: '00',
       message: 'Users retrieved successfully!',
@@ -19,58 +19,69 @@ const user = {
     }
 
     return res.status(200).json({
-      responseJson
+      response
     });
    } catch (error) {
-    const responseJson: Failure = {
+    const response: Failure = {
       status: false,
       code: '-98',
       error: 'Error connecting to db'
     }
 
     return res.status(400).json({
-      responseJson
+      response
     })
    }
   },
   createUser: async (req: Request, res: Response) => {
     if (req.body === null) {
-      const responseJson: Failure = {
+      const response: Failure = {
         status: false,
         code: '-99',
         error: 'Empty payload'
       }
 
       return res.status(400).json({
-        responseJson
+        response
       });
     }
 
     try {
-      const validate = validateUser(req.body);
+      const { error, value } = validateUser(req.body);
 
-      if (validate.error) {
-        const responseJson: Failure = {
+      if (error) {
+        const missingField = error['details'][0]['context']['label']
+
+        const response: Failure = {
           status: false,
           code: '-99',
-          error: 'Invalid input',
-          data: validate.value
+          error: 'Invalid payload! ' + missingField + ' is required.',
+          data: value
         }
 
         return res.status(400).json({
-          responseJson
+          response
         });
       }
 
-      const hashedPassword = await hash(req.body.password);
+      const {
+        username,
+        password,
+        email,
+        phone_number,
+        first_name,
+        last_name
+      } = req.body;
+
+      const hashedPassword = await hash(password);
 
       const payload: IUserData = {
-        username: req.body.username,
+        username,
         password: hashedPassword === null ? '' : hashedPassword,
-        email: req.body.email,
-        first_name: req.body.first_name,
-        last_name: req.body.last_name,
-        phone_number: req.body.phone_number,
+        email,
+        first_name,
+        last_name,
+        phone_number,
         verification_status: 1,
         date_created: new Date(),
         date_updated: new Date()
@@ -79,7 +90,7 @@ const user = {
       const result = await createUser(payload);
 
       if (result.length > 0) {
-        const responseJson: Success = {
+        const response: Success = {
           status: true,
           code: '00',
           message: 'User created successfully!',
@@ -87,28 +98,28 @@ const user = {
         }
   
         return res.status(201).json({
-          responseJson
+          response
         });
       }
 
-      const responseJson: Failure = {
+      const response: Failure = {
         status: false,
         code: '-99',
         error: 'Unable to create user!'
       }
 
       return res.status(400).json({
-        responseJson
+        response
       });
     } catch (error) {
-      const responseJson: Failure = {
+      const response: Failure = {
         status: false,
         code: '-99',
         error: 'Bad request. ' + error
       }
 
       return res.status(400).json({
-        responseJson
+        response
       });
     }
   }
